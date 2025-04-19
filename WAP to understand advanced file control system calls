@@ -1,0 +1,97 @@
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
+
+int main(int argc, char *argv[])
+{
+    int flag;
+    if(argc == 2)
+    {
+        int fd = open(argv[1], O_CREAT | O_WRONLY | O_TRUNC , S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+        struct flock lock_s;
+        memset(&lock_s,0,sizeof(lock_s));
+        pid_t pid = fork();
+        if (pid > 0)
+        {
+            lock_s.l_type = F_WRLCK;
+            fcntl(fd,F_SETLKW,&lock_s);
+
+            // printf("fd -> %d\n",fd);
+            printf("PARENT PROCESS: locked file\n");
+            printf("PARENT PROCESS: writing to file f1.txt\n");
+
+            int backup = dup2(1,6);
+            dup2(fd,1);
+
+            printf("PRIME NUMBER BY PARENT\n");
+
+            for(int i=2;i<=100;i++)
+            {
+                flag=1;
+                for(int j=2;j<=i/2;j++)
+                {
+                    if(i%j==0)
+                    {
+                        flag=0;
+                        break;
+                    }
+                }
+                if(flag==1)
+                {
+                    printf("%d ",i);
+                }
+            }
+            printf("\n");
+
+            // fflush(stdout);
+            dup2(backup,1);
+
+            lock_s.l_type = F_UNLCK;
+            fcntl(fd,F_SETLKW,&lock_s);
+            printf("PARENT PROCESS: unlocked file\n");
+        }
+        else if(pid == 0)
+        {
+            lock_s.l_type = F_WRLCK;
+            fcntl(fd,F_SETLKW,&lock_s);
+
+            printf("CHILD PROCESS: locked file\n");
+            printf("CHILD PROCESS: writing to file f1.txt\n");
+
+            // printf("fd -> %d\n",fd);
+            int backup = dup2(1,6);
+            dup2(fd,1);
+
+            printf("FINONACCI SERIES BY CHILD\n");
+
+            int first = 0, second = 1, next = 0;
+            while (next <= 100)
+            {
+                printf("%d ", next);
+                first = second;
+                second = next;
+                next = first + second;
+            }
+
+            printf("\n");
+
+            // fflush(stdout);
+            dup2(backup,1);
+
+            lock_s.l_type = F_UNLCK;
+            fcntl(fd,F_SETLKW,&lock_s);
+            printf("CHILD PROCESS: unlocked file\n");
+        }
+    }
+    else
+    {
+        printf("./a.out\n");
+        printf("Insufficient arguments\n");
+        printf("Usage : ./a.out filename\n");
+        return -1;
+    }
+    return 0;
+}
