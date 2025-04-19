@@ -1,0 +1,36 @@
+#include<stdio.h>
+#include<signal.h>
+#include<string.h>
+#include<unistd.h>
+#include<sys/types.h>
+
+void handler(int signum, siginfo_t *info, void *arg)
+{
+    printf("Signal Number: %d\n",info->si_signo);
+    // to restore
+    printf("Child process terminated with exit: %d\n",info->si_status);
+}
+
+int main()
+{
+    struct sigaction new_act;
+    memset(&new_act,0,sizeof(sigaction));
+    //Function ptr which has to be executed when this process receiveing the signal
+    new_act.sa_sigaction = handler;
+    new_act.sa_flags = SA_SIGINFO | SA_NOCLDWAIT; //To get signal information and avoid child become zombie
+    //Handle the SIGINT signal using sigaction
+    sigaction(SIGINT,&new_act,NULL);
+
+    int pid = fork();
+    if(pid > 0)
+    {
+        printf("This is parent process\n");
+        sleep(10);
+        printf("Parent terminating\n");
+    }
+    else if(pid == 0)
+    {
+        printf("This is child process\n");
+        sleep(3);
+        printf("Child terminating\n");}
+}
