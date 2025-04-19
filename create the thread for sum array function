@@ -1,0 +1,26 @@
+#include<stdio.h>
+#include<pthread.h>
+#include<unistd.h>
+#include<stdio.h>
+void *sum_arg(void *arg)
+{
+        //int*sum = malloc(4);
+        int sum = 0;
+        //find the sum of all array elements
+        for(int i =0;i<10;i++)
+.       {
+                sum = sum +((int*)arg)[i];
+        }
+        return (void*)(long)sum;
+}
+int main()
+{
+   int arr[]={1,2,3,4,5,6,7,8,9,10},sum;
+   pthread_t tid;
+   //create the thread for sum array function
+   pthread_create(&tid,NULL,sum_arr,arr);
+   pthread_join(tid,(void**)&sum); // waiting and collecting the return value from thread
+
+   // print the sum of array elements
+   printf("sum is %d\n",sum);
+   }
