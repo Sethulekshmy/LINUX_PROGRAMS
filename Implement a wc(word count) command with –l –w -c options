@@ -1,0 +1,80 @@
+// Description: Implement a wc(word count) command with –l –w -c options
+    SAMPLE INPUT: ./a.out f1.txt f2.txt through command line
+    SAMPLE OUTPUT: contents in f1.txt is copied to f2.txt//
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+
+extern int optind;
+void my_wc(int fd, int *char_count, int *word_count, int *line_count);
+
+int main(int argc, char *argv[])
+{
+    char ch;
+    int fd, flag_l = 0, flag_w = 0, flag_c = 0, char_count=0, line_count=0, word_count=0;
+    while ((ch = getopt(argc, argv, "lwc")) != -1)
+    {
+        switch(ch)
+        {
+            case 'l':
+                    flag_l = 1;
+                    break;
+            case 'w':
+                    flag_w = 1;
+                    break;
+            case 'c':
+                    flag_c = 1;
+                    break;
+        }
+    }
+    printf("optind is %d\n",optind);
+    if(argc == 1)
+    {
+        my_wc(0, &char_count,&line_count, &word_count); 
+        if(flag_l)
+            printf("%d\t",line_count);
+        if(flag_w)
+            printf("%d\t", word_count);
+        if(flag_c)
+            printf("%d\n",char_count);   
+    }
+    else if(argc > 1)
+    {
+        printf("hello world\n");
+    }
+}
+
+void my_wc(int fd, int *char_count, int *word_count, int *line_count)
+{
+    char ch;
+    int flag = 1;
+    while(read(fd,&ch,1))
+    {
+        (*char_count)++;
+        if(ch=='\n')
+        {
+            (*line_count)++;
+        }
+        if((ch=='\n')||(ch=='\t')||(ch==' '))
+        {
+            if(flag==1)
+            {
+                (*word_count)++;
+                flag=0; // Switch to the "outside a word" state
+            }
+        }
+        else
+        {
+            flag=1; // Switch to the "inside a word" state
+        }
+    }
+    
+    if(flag==1) //If flag == 1, it means the input ended while the program was still inside a word. This adds the final word to the count.
+    {
+        (*word_count)++;
+    }
+}
