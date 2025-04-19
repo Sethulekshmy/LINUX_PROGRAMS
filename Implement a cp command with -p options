@@ -1,0 +1,72 @@
+//Sample Input: ./a.out f1.txt f2.txt through command line
+Sample Output: contents in f1.txt is copied to f2.txt //
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
+
+int main(int argc, char *argv[])
+{
+    if(argc < 3)
+    { 
+        printf("ARGUMENT COUNT IS INVALID!\n");
+        return -1;
+    }
+
+    char src_file[10], dest_file[10];
+    int src_fd, dest_fd;
+
+    if(argc == 3)
+    {
+        strcpy(src_file, argv[1]);
+        strcpy(dest_file, argv[2]);
+    }
+    else if(argc == 4)
+    {
+        strcpy(src_file, argv[2]);
+        strcpy(dest_file, argv[3]);
+    }
+    src_fd = open(src_file, O_RDONLY);
+    if(src_fd == -1)
+    {
+        printf("SOURCE FILE DOES NOT EXIST!\n");
+        return -1;
+    }
+
+    //validating destination file and opening
+    dest_fd = open(dest_file, O_CREAT|O_WRONLY|O_EXCL, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+    if(dest_fd == -1)
+    {
+        if(errno == EEXIST)
+        {
+            char ch;
+            printf("FILE ALREADY EXISTS. DO YOU WANT TO CLEAR IT? (y/n)\n");
+            scanf("%c",&ch);
+            if(ch == 'y')
+                dest_fd = open(dest_file,O_WRONLY|O_TRUNC);    
+            else if(ch == 'n')
+                return -1;        
+        }
+    }
+    
+    int read_bytes;
+    char buf[100];
+    struct stat status;
+    fstat(src_fd,&status);
+
+    do
+    {
+        read_bytes = read(src_fd, buf, 50);
+        write(dest_fd, buf, read_bytes);
+
+    }while(read_bytes == 50);
+
+    if((argc == 4) && (strcmp(argv[1],"-p") == 0))
+        fchmod(dest_fd, status.st_mode);
+
+    printf("%s COPIED SUCCESSFULLY TO %s\n",src_file, dest_file);
+    return 0;
+}
