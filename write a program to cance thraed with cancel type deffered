@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
+
+void *fun(void *arg)
+{
+    // Enable cancellation
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);  // <- Deferred cancellation
+
+    for(int i = 0; i < 10;  i++)
+    {
+        printf("Thread is running %d times\n", i + 1);
+        sleep(1);
+        // pthread_testcancel(); // Optional: manually check for cancellation
+    }
+
+    return NULL;
+}
+
+int main()
+{
+    pthread_t tid;
+
+    pthread_create(&tid, NULL, fun, NULL);
+
+    sleep(3);
+    printf("sending the cancellation request\n");
+
+    pthread_cancel(tid);  // Sends cancellation request
+
+    pthread_join(tid, NULL);  // Waits for the thread
+
+    printf("Main thread terminating\n");
+    return 0;
+}
