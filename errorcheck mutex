@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <pthread.h>
+
+int main() {
+    pthread_mutex_t mutex;
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+    pthread_mutex_init(&mutex, &attr);
+
+    printf("Locking first time...\n");
+    pthread_mutex_lock(&mutex);
+
+    printf("Trying to lock second time (should fail)...\n");
+    int ret = pthread_mutex_lock(&mutex); // Returns error
+
+    if (ret == 0) {
+        printf("Second lock succeeded (unexpected).\n");
+        pthread_mutex_unlock(&mutex); // Unlock if accidentally locked
+    } else {
+        printf("Second lock failed as expected. Error code: %d\n", ret);
+    }
+
+    pthread_mutex_unlock(&mutex);
+    pthread_mutex_destroy(&mutex);
+
+    printf("Program completed.\n");
+
+    return 0;
+}
