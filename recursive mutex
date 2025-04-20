@@ -1,0 +1,26 @@
+#include <stdio.h>
+#include <pthread.h>
+
+int main() {
+    pthread_mutex_t mutex;
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&mutex, &attr);
+
+    printf("Locking first time...\n");
+    pthread_mutex_lock(&mutex);
+
+    printf("Locking second time (recursive)...\n");
+    pthread_mutex_lock(&mutex); // Allowed
+
+    printf("Unlocking twice...\n");
+    pthread_mutex_unlock(&mutex);
+    pthread_mutex_unlock(&mutex);
+
+    pthread_mutex_destroy(&mutex);
+    printf("Program completed without deadlock.\n");
+
+    return 0;
+}
