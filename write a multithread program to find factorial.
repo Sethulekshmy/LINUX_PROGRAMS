@@ -1,0 +1,70 @@
+#include <stdio.h>
+#include <pthread.h>
+
+#define THREAD_COUNT 3
+
+typedef struct {
+    unsigned long int start;
+    unsigned long int end;
+} Range;
+
+unsigned long int number;
+unsigned long int result = 1;
+pthread_mutex_t lock;
+
+void* compute_factorial(void* arg) {
+    Range* range = (Range*)arg;
+    unsigned long int local = 1;
+
+    for (unsigned long int i = range->start; i <= range->end; i++) {
+        local *= i;
+    }
+
+    pthread_mutex_lock(&lock);
+    result *= local;
+    pthread_mutex_unlock(&lock);
+
+    return NULL;
+}
+
+int main() {
+    printf("Enter the number: ");
+    scanf("%lu", &number);
+
+    if (number == 0 || number == 1) {
+        printf("Factorial of %lu is 1\n", number);
+        return 0;
+    }
+
+    pthread_t tid[THREAD_COUNT];
+    Range ranges[THREAD_COUNT];
+      unsigned long int chunk = number / THREAD_COUNT;
+    unsigned long int start = 1;
+
+    pthread_mutex_init(&lock, NULL);
+
+    // Assign ranges (creation phase)
+    for (unsigned long int i = 0; i < THREAD_COUNT; i++) {
+        ranges[i].start = start;
+        if (i == THREAD_COUNT - 1)
+            ranges[i].end = number; // Last thread takes the remaining
+        else
+            ranges[i].end = start + chunk - 1;
+        start = ranges[i].end + 1;
+    }
+
+    // Thread creation
+    for (unsigned long int i = 0; i < THREAD_COUNT; i++) {
+        pthread_create(&tid[i], NULL, compute_factorial, &ranges[i]);
+    }
+
+    // Thread joining
+    for (unsigned long int i = 0; i < THREAD_COUNT; i++) {
+        pthread_join(tid[i], NULL);
+    }
+
+    printf("Factorial of %lu is %lu\n", number, result);
+
+    pthread_mutex_destroy(&lock);
+    return 0;
+}
